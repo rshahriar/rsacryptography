@@ -37,52 +37,52 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff:
-.idea/**/workspace.xml
-.idea/**/tasks.xml
+rsa-biginteger/.idea/**/workspace.xml
+rsa-biginteger/.idea/**/tasks.xml
 
 # Sensitive or high-churn files:
-.idea/**/dataSources/
-.idea/**/dataSources.ids
-.idea/**/dataSources.xml
-.idea/**/dataSources.local.xml
-.idea/**/sqlDataSources.xml
-.idea/**/dynamic.xml
-.idea/**/uiDesigner.xml
+rsa-biginteger/.idea/**/dataSources/
+rsa-biginteger/.idea/**/dataSources.ids
+rsa-biginteger/.idea/**/dataSources.xml
+rsa-biginteger/.idea/**/dataSources.local.xml
+rsa-biginteger/.idea/**/sqlDataSources.xml
+rsa-biginteger/.idea/**/dynamic.xml
+rsa-biginteger/.idea/**/uiDesigner.xml
 
 # Gradle:
-.idea/**/gradle.xml
-.idea/**/libraries
+rsa-biginteger/.idea/**/gradle.xml
+rsa-biginteger/.idea/**/libraries
 
 # Mongo Explorer plugin:
-.idea/**/mongoSettings.xml
+rsa-biginteger/.idea/**/mongoSettings.xml
 
 ## File-based project format:
-*.iws
+rsa-biginteger/*.iws
 
 ## Plugin-specific files:
 
 # IntelliJ
-/out/
+rsa-biginteger//out/
 
 # mpeltonen/sbt-idea plugin
-.idea_modules/
+rsa-biginteger/.idea_modules/
 
 # JIRA plugin
-atlassian-ide-plugin.xml
+rsa-biginteger/atlassian-ide-plugin.xml
 
 # Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
-fabric.properties
+rsa-biginteger/com_crashlytics_export_strings.xml
+rsa-biginteger/crashlytics.properties
+rsa-biginteger/crashlytics-build.properties
+rsa-biginteger/fabric.properties
 
 ### Intellij Patch ###
 # Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
 
-# *.iml
-# modules.xml
-# .idea/misc.xml
-# *.ipr
+rsa-biginteger/*.iml
+rsa-biginteger/modules.xml
+rsa-biginteger/.idea/misc.xml
+rsa-biginteger/*.ipr
 
 # End of https://www.gitignore.io/api/intellij
 

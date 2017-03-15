@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/rakib/CLionProjects/rsa-biginteger/main.cpp
+/home/rakib/rsacryptography/rsa-biginteger/main.cpp
 iostream
 -
 string

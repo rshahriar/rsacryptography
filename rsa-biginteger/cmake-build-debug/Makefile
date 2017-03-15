@@ -48,10 +48,10 @@ RM = /opt/clion-2016.3.4/bin/cmake/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/rakib/CLionProjects/rsa-biginteger
+CMAKE_SOURCE_DIR = /home/rakib/rsacryptography/rsa-biginteger
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/rakib/CLionProjects/rsa-biginteger/cmake-build-debug
+CMAKE_BINARY_DIR = /home/rakib/rsacryptography/rsa-biginteger/cmake-build-debug
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/rakib/CLionProjects/rsa-biginteger/cmake-build-debug/CMakeFiles /home/rakib/CLionProjects/rsa-biginteger/cmake-build-debug/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rakib/rsacryptography/rsa-biginteger/cmake-build-debug/CMakeFiles /home/rakib/rsacryptography/rsa-biginteger/cmake-build-debug/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/rakib/CLionProjects/rsa-biginteger/cmake-build-debug/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/rakib/rsacryptography/rsa-biginteger/cmake-build-debug/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
