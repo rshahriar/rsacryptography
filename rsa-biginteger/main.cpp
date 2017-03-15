@@ -54,9 +54,9 @@ private:
     string add(string number1, string number2);
     string subtract(string number1, string number2);
     string multiply(string n1, string n2);
+//    pair<BigInteger, BigInteger> divide(BigInteger dividend, BigInteger divisor);
     pair<BigInteger, BigInteger> divide(BigInteger dividend, BigInteger divisor);
-    pair<BigInteger, BigInteger> divide1(BigInteger dividend, BigInteger divisor);
-    pair<BigInteger, BigInteger> divide2(BigInteger dividend, BigInteger divisor);
+    pair<BigInteger, BigInteger> divideSurplus(BigInteger dividend, BigInteger divisor);
 //    pair<string, long long> divide(string n, long long den);
     string toString(long long n);
     long long toInt(string s);
@@ -291,7 +291,7 @@ BigInteger BigInteger::operator * (BigInteger b) {
 
 BigInteger BigInteger::operator / (BigInteger b) {
     BigInteger div;
-    div = divide1((*this),b).first;
+    div = divide((*this), b).first;
     if(div.getNumber() == "0") // avoid (-0) problem
         div.setSign(false);
     return div;
@@ -307,7 +307,7 @@ BigInteger BigInteger::operator % (BigInteger b) {
             return BigInteger("1", (*this).getSign() != b.getSign());
         }
     } else {
-        BigInteger rem = divide1((*this), b).second;
+        BigInteger rem = divide((*this), b).second;
         return rem;
     }
 }
@@ -474,6 +474,7 @@ string BigInteger::multiply(string n1, string n2) {
     return res;
 }
 
+/*
 pair<BigInteger, BigInteger> BigInteger::divide(BigInteger dividend, BigInteger divisor) {
     // handle special case for 2, ends with a even number
     // handle special case for 3, sum of all numbers divisible by 3
@@ -490,8 +491,9 @@ pair<BigInteger, BigInteger> BigInteger::divide(BigInteger dividend, BigInteger 
     }
     return make_pair(quotient, remainder);
 }
+*/
 
-pair<BigInteger, BigInteger> BigInteger::divide1(BigInteger dividend, BigInteger divisor) {
+pair<BigInteger, BigInteger> BigInteger::divide(BigInteger dividend, BigInteger divisor) {
 
     // if we don't need to divide at all
     if (dividend < divisor) {
@@ -534,7 +536,7 @@ pair<BigInteger, BigInteger> BigInteger::divide1(BigInteger dividend, BigInteger
     return make_pair(quotient, remainder);
 }
 
-pair<BigInteger, BigInteger> BigInteger::divide2(BigInteger dividend, BigInteger divisor) {
+pair<BigInteger, BigInteger> BigInteger::divideSurplus(BigInteger dividend, BigInteger divisor) {
     // if we don't need to divide at all
     if (dividend < divisor) {
         return make_pair(BigInteger("0", dividend.getSign() != divisor.getSign()),
