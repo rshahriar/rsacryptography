@@ -63,11 +63,8 @@ private:
 };
 
 /*
-
  * modular exponentiation
-
  */
-
 BigInteger modulo(BigInteger base, BigInteger exponent, BigInteger mod) {
     BigInteger x = 1;
     BigInteger y = base;
@@ -125,14 +122,18 @@ bool Miller(BigInteger p, int iteration) {
 
 int main() {
 //    BigInteger b1("10090000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001013000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001031");
-    BigInteger b1("1814159566819970307982681716822107016038920170504391457462563485198126916735167260215619523429714031");
-//    BigInteger b1("7212610147295474909544523785043492409969382148186765460082500085393519556525921455588705423020751421");
+    BigInteger b1("7212610147295474909544523785043492409969382148186765460082500085393519556525921455588705423020751421");
+
+//    BigInteger b1("1814159566819970307982681716822107016038920170504391457462563485198126916735167260215619523429714031");
     const clock_t begin_time = clock();
     if (Miller(b1, 10)) {
         std::cout << "The number is prime!";
     }
-//    std::cout << (b1 % 2).getNumber();
     std::cout << "\nTime taken to perform primality test  = " << float( clock () - begin_time ) /  CLOCKS_PER_SEC;
+/*
+    b1 %= BigInteger("1712312321");
+    std::cout << "\nResult: " << b1.getNumber() << "\n";
+*/
     return 0;
 }
 
@@ -291,7 +292,8 @@ BigInteger BigInteger::operator * (BigInteger b) {
 
 BigInteger BigInteger::operator / (BigInteger b) {
     BigInteger div;
-    div = divide((*this), b).first;
+//    div = divide((*this), b).first;
+    div = divideSurplus((*this), b).first;
     if(div.getNumber() == "0") // avoid (-0) problem
         div.setSign(false);
     return div;
@@ -306,8 +308,13 @@ BigInteger BigInteger::operator % (BigInteger b) {
         } else {
             return BigInteger("1", (*this).getSign() != b.getSign());
         }
+    } else if ((*this) == b) {
+        return BigInteger("0", this->getSign() != b.getSign());
+    } else if ((*this) < b) {
+        return (*this);
     } else {
-        BigInteger rem = divide((*this), b).second;
+//        BigInteger rem = divide((*this), b).second;
+        BigInteger rem = divideSurplus((*this), b).second;
         return rem;
     }
 }
@@ -543,37 +550,41 @@ pair<BigInteger, BigInteger> BigInteger::divideSurplus(BigInteger dividend, BigI
                          BigInteger(dividend, dividend.getSign() != divisor.getSign()));
     }
 
-    BigInteger quotient = BigInteger("0");
-    BigInteger remainder = BigInteger(dividend);
-    BigInteger divisorAbs = divisor.absolute();
+    BigInteger quotient = BigInteger("0", dividend.getSign() != divisor.getSign());
+    BigInteger remainder = BigInteger(dividend.absolute());
+    BigInteger divisorAbs = BigInteger(divisor.absolute());
 
-    while(remainder >= divisor) {
+    while(remainder >= divisorAbs) {
         // check if divisor and remainder are equal sized, then quotient should be less than 10
-        if (remainder.getNumber().length() == divisor.getNumber().length()) {
+        if (remainder.getNumber().length() == divisorAbs.getNumber().length()) {
             // if equal sized then calculate the division by subtraction, less than 10 subtracts
-            while (remainder >= divisor) {
-                remainder -= divisor;
+            while (remainder >= divisorAbs) {
+                remainder -= divisorAbs;
                 quotient++;
             }
         } else {
             // if not equal sized then project a close multiple of the divisor to dividend by multiplying 10's
-            BigInteger temp = BigInteger(remainder.getNumber().substr(0, divisor.getNumber().length()));
+            BigInteger temp = BigInteger(remainder.getNumber().substr(0, divisorAbs.getNumber().length()));
             long numberOfZeros = 0;
             // check if multiplying 10's to divisor will generate a bigger number than dividend
             int surplus = 0;
             if (temp >= divisorAbs) {
                 // now 10's multiple will be less than or equal to dividend
-                numberOfZeros = remainder.getNumber().length() - divisor.getNumber().length();
+                numberOfZeros = remainder.getNumber().length() - divisorAbs.getNumber().length();
                 while (temp >= divisorAbs) {
                     temp -= divisorAbs;
                     surplus++;
                 }
             } else {
                 // multiply 10's 1 less to generate a number that is less than dividend
-                numberOfZeros = remainder.getNumber().length() - divisor.getNumber().length() - 1;
-                int remainderFirstDigit = remainder.getNumber()[0] - '0';
-                int divisorFirstDigit = divisorAbs.getNumber()[0] - '0';
-                surplus = remainderFirstDigit * 10 / divisorFirstDigit;
+                numberOfZeros = remainder.getNumber().length() - divisorAbs.getNumber().length() - 1;
+                string str = temp.getNumber();
+                str.append(1, '0');
+                temp = BigInteger(str);
+                while (temp >= divisorAbs) {
+                    temp -= divisorAbs;
+                    surplus++;
+                }
             }
 
             string qStr("");
@@ -581,7 +592,7 @@ pair<BigInteger, BigInteger> BigInteger::divideSurplus(BigInteger dividend, BigI
             qStr.append(numberOfZeros, '0');
             quotient += BigInteger(qStr);
 
-            BigInteger surplusDivisor = divisor * surplus;
+            BigInteger surplusDivisor = divisorAbs * surplus;
             string tempDivisorStr = surplusDivisor.getNumber();
             tempDivisorStr.append(numberOfZeros, '0');
             remainder -= BigInteger(tempDivisorStr);
