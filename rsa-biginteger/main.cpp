@@ -1,24 +1,31 @@
 #include <iostream>
-#include <string>
+#include <fstream>
 #include <sstream>
 #include <cmath>
-//#define MAX 10000 // for strings
+#include <cstdlib>
+#include <string>
+
+#define MILLIS 1000
 
 using namespace std;
+
 class BigInteger {
 private:
     string number;
     bool sign;
+
 public:
-    BigInteger(); // empty constructor initializes zero
+    BigInteger(); // empty constructor
     BigInteger(string s); // "string" constructor
     BigInteger(string s, bool sin); // "string" constructor
     BigInteger(int n); // "int" constructor
+
     void setNumber(string s);
     const string& getNumber(); // retrieves the number
     void setSign(bool s);
     const bool& getSign();
     BigInteger absolute(); // returns the absolute value
+
     void operator = (BigInteger b);
     bool operator == (BigInteger b);
     bool operator != (BigInteger b);
@@ -26,6 +33,7 @@ public:
     bool operator < (BigInteger b);
     bool operator >= (BigInteger b);
     bool operator <= (BigInteger b);
+
     BigInteger& operator ++(); // prefix
     BigInteger  operator ++(int); // postfix
     BigInteger& operator --(); // prefix
@@ -42,6 +50,7 @@ public:
     BigInteger& operator %= (BigInteger b);
     BigInteger& operator [] (int n);
     BigInteger operator -(); // unary minus sign
+
     operator string(); // for conversion from BigInteger to string
     friend std::ostream& operator<<(std::ostream& out,BigInteger a);
 
@@ -49,22 +58,24 @@ private:
     bool equals(BigInteger n1, BigInteger n2);
     bool less(BigInteger n1, BigInteger n2);
     bool greater(BigInteger n1, BigInteger n2);
+
     string add(string number1, string number2);
     string subtract(string number1, string number2);
     string multiply(string n1, string n2);
-//    pair<BigInteger, BigInteger> divide(BigInteger dividend, BigInteger divisor);
     pair<BigInteger, BigInteger> divide(BigInteger dividend, BigInteger divisor);
-    pair<BigInteger, BigInteger> divideSurplus(BigInteger dividend, BigInteger divisor);
-    pair<BigInteger, BigInteger> divideSquaredProjection(BigInteger dividend, BigInteger divisor);
-//    pair<string, long long> divide(string n, long long den);
+
     string toString(long long n);
     long long toInt(string s);
 };
 
-/*
- * modular exponentiation
- */
+//-----------------------------------------Implementation---------------------------------------------------------------
+std::ostream& operator <<(std::ostream& out,BigInteger a) {
+    out << a.getNumber();
+    return out;
+}
 
+
+// modular exponentiation
 BigInteger modulo(BigInteger base, BigInteger exponent, BigInteger mod) {
     BigInteger x = 1;
     BigInteger y = base;
@@ -76,6 +87,7 @@ BigInteger modulo(BigInteger base, BigInteger exponent, BigInteger mod) {
     }
     return x % mod;
 }
+
 
 BigInteger mulmod(BigInteger a, BigInteger b, BigInteger mod) {
     BigInteger x = 0,y = a % mod;
@@ -89,11 +101,12 @@ BigInteger mulmod(BigInteger a, BigInteger b, BigInteger mod) {
     return x % mod;
 }
 
+
+// Miller-Rabin for Primality Testing
 bool Miller(BigInteger p, int iteration) {
     if (p < 2) {
         return false;
     }
-
     if (p != 2 && p % 2==0) {
         return false;
     }
@@ -102,13 +115,14 @@ bool Miller(BigInteger p, int iteration) {
     while (s % 2 == 0) {
         s /= 2;
     }
+
     for (int i = 0; i < iteration; i++) {
         BigInteger random = (BigInteger)rand();
-        BigInteger pLess = p - 1;
-        BigInteger a = random % pLess;
-        a = a + 1;
+        BigInteger a = random % (p-1) + 1;
+
         BigInteger temp = s;
         BigInteger mod = modulo(a, temp, p);
+
         while (temp != p - 1 && mod != 1 && mod != p - 1) {
             mod = mulmod(mod, mod, p);
             temp *= 2;
@@ -117,9 +131,71 @@ bool Miller(BigInteger p, int iteration) {
             return false;
         }
     }
+
     return true;
 }
 
+
+BigInteger generateRandomNumbers(int digit) {
+    string s;
+
+    for (int i =0; i< digit; i++) {
+        string random =  BigInteger(rand()).getNumber();
+        if (i == 0)
+            s = random[0];
+        else {
+            s += random[1];
+        }
+    }
+
+    return BigInteger(s);
+}
+
+
+bool fermatPrimalityTest(BigInteger p, int iterations) {
+    if (p == 1 || p % 2 == 0) {
+        return false;
+    }
+
+    for (int i = 0; i < iterations; i++) {
+        BigInteger a = (BigInteger)rand() % (p - 1) + 1;
+        if (modulo(a, p - 1, p) != 1){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+// Generates Prime number of desired length By Fermat's Theorm
+BigInteger generatePrimeWithFermat(int digit) {
+    BigInteger n = generateRandomNumbers(digit);
+    cout << n << endl;
+
+    int breakVal = 0;
+    while (fermatPrimalityTest(n, 10) == false) {
+        n = generateRandomNumbers(digit);
+        cout << n << endl;
+        breakVal++;
+        if (breakVal == 100)
+            return 0;
+    }
+
+    return n;
+}
+
+
+// Generates Prime number of desired length
+BigInteger generatePrimeWithMiller(BigInteger p) {
+    while (!Miller(p, 5)) {
+        p++;
+    }
+    return p;
+}
+
+
+//Calculates GCD
 BigInteger gcd(BigInteger a, BigInteger b) {
     BigInteger temp;
     while (b != 0) {
@@ -132,11 +208,8 @@ BigInteger gcd(BigInteger a, BigInteger b) {
 }
 
 
-BigInteger gcdExtended(BigInteger a, BigInteger b, BigInteger *x, BigInteger *y)
-{
-    // Base Case
-    if (b == 0)
-    {
+BigInteger gcdExtended(BigInteger a, BigInteger b, BigInteger *x, BigInteger *y) {
+    if (b == 0) {
         *x = 1;
         *y = 0;
         return a;
@@ -145,99 +218,111 @@ BigInteger gcdExtended(BigInteger a, BigInteger b, BigInteger *x, BigInteger *y)
     BigInteger x1, y1; // To store results of recursive call
     BigInteger gcd = gcdExtended(b, a%b, &x1, &y1);
 
-    // Update x and y using results of recursive
-    // call
-
     *x = y1;
     *y = x1 - (a/b) * y1;
-
 
     return gcd;
 }
 
-BigInteger calculate_d(BigInteger x, BigInteger t)
-{
+
+// Calculates D from e and N
+BigInteger findD(BigInteger e, BigInteger N) {
     BigInteger k = 1;
-    while (1)
-    {
-        k = k + t;
-        if (k % x == 0)
-            return (k / x);
+
+    while (1) {
+        k = k + N;
+        if (k % e == 0) {
+            return (k / e);
+        }
     }
 }
 
+
+// Calculates E
 BigInteger findE(BigInteger phiN) {
-    BigInteger popularEvalues[5] = {3, 7, 17, 257, 65537};
-    for (int i = 0; i < 5; i++) {
+    BigInteger popularEvalues[6] = {3, 5, 7, 17, 257, 65537};
+    for (int i = 0; i < 6; i++) {
         if (gcd (popularEvalues[i], phiN) == 1) {
+            cout << "\nValue of e: " << popularEvalues[i];
             return popularEvalues[i];
         }
     }
-
     return 0;
 }
 
 
-std::ostream& operator <<(std::ostream& out,BigInteger a)
-{
-    out << a.getNumber();
-    return out;
+// Message Encryption
+BigInteger encryptMessage(BigInteger message, BigInteger e, BigInteger N) {
+    const clock_t begin_time = clock();
+    BigInteger en = modulo(message, e, N);
+    cout<< "Encrypted message: " << en << endl;
+    cout << "\nTime of encryption  = " << float( clock () - begin_time ) * MILLIS / CLOCKS_PER_SEC << " ms" << endl;
+    return en;
 }
+
+
+// Message Decryption
+void decryptMessage(BigInteger encryptedMsg, BigInteger d, BigInteger N) {
+    const clock_t begin_time = clock();
+    BigInteger de = modulo(encryptedMsg, d, N);
+    cout<< "\nDecrypted message: " << de << endl;
+    cout << "\nTime of decryption  = " << float( clock () - begin_time) * MILLIS / CLOCKS_PER_SEC << " ms" << endl;
+}
+
 
 int main() {
-/*
-//    BigInteger b1("1814159566819970307982681716822107016038920170504391457462563485198126916735167260215619523429714031");
+    string p, q;
+    string bits;
+    cout << "Fixed value of N: 1000 bit" << endl;
 
-    BigInteger b1("10090000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001013000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000101900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010210000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001031");
-    BigInteger b2("721261014729547490954452378504349240996938214818676546008250008539351955652592145558870542302075142100000");
-//    BigInteger b1("787345");
-//    BigInteger b2("123");
-    BigInteger b3 = b1 / b2;
-    const clock_t begin_time = clock();
-    cout<< b3.getNumber();
-    cout << "\nTime taken for b1 / b2 = " << float( clock () - begin_time ) /  CLOCKS_PER_SEC;
+    // code for prime number generation will be done later
+/*
+    p = generatePrimeWithFermat(digits);
+    cout <<"p: " << p << endl;
+
+    q = generatePrimeWithFermat(digits);
+    cout <<"q: " << q << endl;
 */
 
-//    if (Miller(b2, 10)) {
-//        std::cout << "The number is prime!";
-//    }
+    // initiate prime number of 151 digits
+    BigInteger b1("8290515735040856273279920028019754089906648110503848228748187375207350805510166301444321260999006754288859997100400526846118668190294438035469087208971");
+    BigInteger b2("1201220374814320143127279864545495373815987095424121160482538063721483660688779311129370377018803872219275627461811376074607800016797301371429593867351");
 
-    BigInteger b1("2071561667400245712088091542256908512206470131429679791728284604628489949383382852054263725446770019431856265272566210206028080915537623664508293339218888855829741302772372696799198697890193514567953840554756498581501030028732877786636129759291825384798494860219898397736829391041740868492459331514262769204776882413720166875829386657690097056328122106147523284369357662710052860991083760187090058216260432280354147365325944143590324309806584380567448454116167669");
-    BigInteger b2("1912401190856324558608863437762526732142183429695085360631093911123770848507956265834176055433948346689923354607444585226608201263265775574369423255238079257584120915498808287374862118195634864322724516060054753867489543157037865371366807450685864574809585321827884246842788781492944665460872779599494214438240713259304779633449548698479375269475955753823879878151057005679051049895949889676841685448036465386999184327834831481335146129830037079064509960244134533");
-    BigInteger x, y;
-    BigInteger a, b = (b1 - 1) * (b2 - 1);
-    a = findE(b);
+    clock_t time_n = clock();
 
-    BigInteger message("7845737565212109");
+    BigInteger N = b1 * b2;
+    cout <<"N: " << N << endl;
+    cout << "\nTime to calculate N  = " << float( clock () - time_n ) * MILLIS /  CLOCKS_PER_SEC << " ms" <<endl;
+    BigInteger phiN = (b1 - 1) * (b2 - 1);
 
-    const clock_t begin_time = clock();
-    BigInteger en = modulo(message, a, (b1 * b2));
-    cout<< "en is " << en << endl;
-    cout << "\nTime taken to claculate en  = " << float( clock () - begin_time ) /  CLOCKS_PER_SEC;
+    clock_t time_e = clock();
+    BigInteger e = findE(phiN);
+    cout << "\nTime to calculate e = " << float( clock () - time_e) * MILLIS /  CLOCKS_PER_SEC << " ms" << endl;
 
-    const clock_t begin_time1 = clock();
-    BigInteger d = calculate_d(a, b);
-    cout << "\nTime taken to claculate d  = " << float( clock () - begin_time1 ) /  CLOCKS_PER_SEC;
+    clock_t time_d = clock();
+    BigInteger d = findD(e, phiN);
+    cout << "\nTime to calculate d  = " << float( clock () - time_d) * MILLIS /  CLOCKS_PER_SEC << " ms" << endl;
+    cout << "\nd = " << d << endl;
 
-    const clock_t begin_time2 = clock();
-    BigInteger de = modulo(en, d, (b1 * b2));
-    cout<< "\nde is " << de << endl;
-    cout << "\nTime taken to calculate de  = " << float( clock () - begin_time2 ) /  CLOCKS_PER_SEC << endl;
-
+    string input;
+    cout << "\nEnter Message: " << endl;
+    cin >> input;
+    BigInteger message(input);
+    BigInteger en = encryptMessage(message, e, N);
+    decryptMessage(en, d, N);
     return 0;
 }
 
 
-
-//------------------------------------------------------------------------------
-
-BigInteger::BigInteger() { // empty constructor initializes zero
+//-------------------------------------- Constructor -----------------------------------------------------------
+BigInteger::BigInteger() {
     number = "0";
     sign = false;
 }
 
-BigInteger::BigInteger(string s) { // "string" constructor
-    if( isdigit(s[0]) ) { // if not signed
+
+BigInteger::BigInteger(string s) {
+    if( isdigit(s[0]) ) {
         setNumber(s);
         sign = false; // +ve
     } else {
@@ -246,19 +331,20 @@ BigInteger::BigInteger(string s) { // "string" constructor
     }
 }
 
-BigInteger::BigInteger(string s, bool sin) { // "string" constructor
+
+BigInteger::BigInteger(string s, bool sin) {
     setNumber( s );
     setSign( sin );
 }
 
-BigInteger::BigInteger(int n) { // "int" constructor
+
+BigInteger::BigInteger(int n) {
     stringstream ss;
     string s;
     ss << n;
     ss >> s;
 
-
-    if( isdigit(s[0]) ) { // if not signed
+    if( isdigit(s[0]) ) {
         setNumber( s );
         setSign( false ); // +ve
     } else {
@@ -267,63 +353,78 @@ BigInteger::BigInteger(int n) { // "int" constructor
     }
 }
 
+
 void BigInteger::setNumber(string s) {
     number = s;
 }
 
-const string& BigInteger::getNumber() { // retrieves the number
+
+const string& BigInteger::getNumber() {
     return number;
 }
+
 
 void BigInteger::setSign(bool s) {
     sign = s;
 }
 
+
 const bool& BigInteger::getSign() {
     return sign;
 }
 
+
 BigInteger BigInteger::absolute() {
-    return BigInteger( getNumber() ); // +ve by default
+    return BigInteger(getNumber());
 }
 
+
+//-------------------------------------- Operators ------------------------------------------------------------
 void BigInteger::operator = (BigInteger b) {
     setNumber( b.getNumber() );
     setSign( b.getSign() );
 }
 
+
 bool BigInteger::operator == (BigInteger b) {
     return equals((*this) , b);
 }
+
 
 bool BigInteger::operator != (BigInteger b) {
     return ! equals((*this) , b);
 }
 
+
 bool BigInteger::operator > (BigInteger b) {
     return greater((*this) , b);
 }
 
+
 bool BigInteger::operator < (BigInteger b) {
     return less((*this) , b);
 }
+
 
 bool BigInteger::operator >= (BigInteger b) {
     return equals((*this) , b)
            || greater((*this), b);
 }
 
+
 bool BigInteger::operator <= (BigInteger b) {
     return equals((*this) , b)
            || less((*this) , b);
 }
 
-BigInteger& BigInteger::operator ++() { // prefix
+
+BigInteger& BigInteger::operator ++() {
     (*this) = (*this) + 1;
     return (*this);
 }
 
-BigInteger BigInteger::operator ++(int) { // postfix
+
+BigInteger BigInteger::operator ++(int) {
     BigInteger before = (*this);
 
     (*this) = (*this) + 1;
@@ -331,17 +432,20 @@ BigInteger BigInteger::operator ++(int) { // postfix
     return before;
 }
 
-BigInteger& BigInteger::operator --() { // prefix
+
+BigInteger& BigInteger::operator --() {
     (*this) = (*this) - 1;
     return (*this);
 
 }
 
-BigInteger BigInteger::operator --(int) { // postfix
+
+BigInteger BigInteger::operator --(int) {
     BigInteger before = (*this);
     (*this) = (*this) - 1;
     return before;
 }
+
 
 BigInteger BigInteger::operator + (BigInteger b) {
     BigInteger addition;
@@ -357,16 +461,18 @@ BigInteger BigInteger::operator + (BigInteger b) {
             addition.setSign( b.getSign() );
         }
     }
-    if(addition.getNumber() == "0") // avoid (-0) problem
+    if(addition.getNumber() == "0")
         addition.setSign(false);
 
     return addition;
 }
 
+
 BigInteger BigInteger::operator - (BigInteger b) {
-    b.setSign( ! b.getSign() ); // x - y = x + (-y)
+    b.setSign( ! b.getSign() );
     return (*this) + b;
 }
+
 
 BigInteger BigInteger::operator * (BigInteger b) {
     BigInteger mul;
@@ -374,30 +480,23 @@ BigInteger BigInteger::operator * (BigInteger b) {
     mul.setNumber( multiply(getNumber(), b.getNumber() ) );
     mul.setSign( getSign() != b.getSign() );
 
-    if(mul.getNumber() == "0") // avoid (-0) problem
+    if(mul.getNumber() == "0")
         mul.setSign(false);
 
     return mul;
 }
 
+
 BigInteger BigInteger::operator / (BigInteger b) {
     BigInteger div;
-    long ratio = (*this).getNumber().length()/b.getNumber().length();
-/*
-    if (ratio < 2) {
-        div = divideSurplus((*this), b).first;
-    } else if (ratio >= 2) {
-        div = divideSquaredProjection((*this), b).first;
-    }
-*/
     div = divide((*this), b).first;
-    if(div.getNumber() == "0") // avoid (-0) problem
+    if(div.getNumber() == "0")
         div.setSign(false);
     return div;
 }
 
+
 BigInteger BigInteger::operator % (BigInteger b) {
-    // use number properties to reduce time complexity
     if (b == 2) {
         string number = (*this).getNumber();
         int lastDigit = number[number.length()-1] - '0';
@@ -412,49 +511,59 @@ BigInteger BigInteger::operator % (BigInteger b) {
     }
 }
 
+
 BigInteger& BigInteger::operator += (BigInteger b) {
     (*this) = (*this) + b;
     return (*this);
 }
+
 
 BigInteger& BigInteger::operator -= (BigInteger b) {
     (*this) = (*this) - b;
     return (*this);
 }
 
+
 BigInteger& BigInteger::operator *= (BigInteger b) {
     (*this) = (*this) * b;
     return (*this);
 }
+
 
 BigInteger& BigInteger::operator /= (BigInteger b) {
     (*this) = (*this) / b;
     return (*this);
 }
 
+
 BigInteger& BigInteger::operator %= (BigInteger b) {
     (*this) = (*this) % b;
     return (*this);
 }
 
+
 BigInteger& BigInteger::operator [] (int n) {
     return *(this + (n*sizeof(BigInteger)));
 }
 
-BigInteger BigInteger::operator -() { // unary minus sign
+
+BigInteger BigInteger::operator -() {
     return (*this) * -1;
 }
 
+
 BigInteger::operator string() { // for conversion from BigInteger to string
-    string signedString = ( getSign() ) ? "-" : ""; // if +ve, don't print + sign
+    string signedString = ( getSign() ) ? "-" : "";
     signedString += number;
     return signedString;
 }
+
 
 bool BigInteger::equals(BigInteger n1, BigInteger n2) {
     return n1.getNumber() == n2.getNumber()
            && n1.getSign() == n2.getSign();
 }
+
 
 bool BigInteger::less(BigInteger n1, BigInteger n2) {
     bool sign1 = n1.getSign();
@@ -477,24 +586,26 @@ bool BigInteger::less(BigInteger n1, BigInteger n2) {
             return true;
         if(n1.getNumber().length() < n2.getNumber().length())
             return false;
-        return n1.getNumber().compare( n2.getNumber() ) > 0; // greater with -ve sign is LESS
+        return n1.getNumber().compare( n2.getNumber() ) > 0;
     }
 }
+
 
 bool BigInteger::greater(BigInteger n1, BigInteger n2) {
     return ! equals(n1, n2) && ! less(n1, n2);
 }
 
+
 string BigInteger::add(string number1, string number2) {
     string add = (number1.length() > number2.length()) ?  number1 : number2;
     char carry = '0';
-    int differenceInLength = abs( (int) (number1.size() - number2.size()) );
+    int differenceInLength = abs((int)(number1.size() - number2.size()));
 
     if(number1.size() > number2.size())
         number2.insert(0, differenceInLength, '0'); // put zeros from left
-
-    else// if(number1.size() < number2.size())
+    else {
         number1.insert(0, differenceInLength, '0');
+    }
 
     for(int i=number1.size()-1; i>=0; --i) {
         add[i] = ((carry-'0')+(number1[i]-'0')+(number2[i]-'0')) + '0';
@@ -514,6 +625,7 @@ string BigInteger::add(string number1, string number2) {
     return add;
 }
 
+
 string BigInteger::subtract(string number1, string number2) {
     string sub = (number1.length()>number2.length())? number1 : number2;
     int differenceInLength = abs( (int)(number1.size() - number2.size()) );
@@ -532,11 +644,13 @@ string BigInteger::subtract(string number1, string number2) {
         sub[i] = ((number1[i]-'0')-(number2[i]-'0')) + '0';
     }
 
-    while(sub[0]=='0' && sub.length()!=1) // erase leading zeros
+    while(sub[0]=='0' && sub.length()!=1) {
         sub.erase(0,1);
+    }
 
     return sub;
 }
+
 
 string BigInteger::multiply(string n1, string n2) {
     if(n1.length() > n2.length())
@@ -557,112 +671,72 @@ string BigInteger::multiply(string n1, string n2) {
             } else
                 carry = 0;
 
-            temp[j] += '0'; // back to string mood
+            temp[j] += '0';
         }
 
         if(carry > 0)
             temp.insert(0, 1, (carry+'0'));
 
-        temp.append((n1.length()-i-1), '0'); // as like mult by 10, 100, 1000, 10000 and so on
+        temp.append((n1.length()-i-1), '0');
 
-        res = add(res, temp); // O(n)
+        res = add(res, temp);
     }
 
-    while(res[0] == '0' && res.length()!=1) // erase leading zeros
+    while(res[0] == '0' && res.length()!=1)
         res.erase(0,1);
 
     return res;
 }
 
 
+/*
 pair<BigInteger, BigInteger> BigInteger::divide(BigInteger dividend, BigInteger divisor) {
 
-    BigInteger absoluteDividend = dividend.absolute();
-    BigInteger absoluteDivisor = divisor.absolute();
-    if (absoluteDividend < absoluteDivisor) {
-        return make_pair(BigInteger("0", dividend.getSign() != divisor.getSign()),
-                        BigInteger(dividend.getNumber(), dividend.getSign() != divisor.getSign()));
-    }
-    else if (absoluteDividend.getNumber().length() <= absoluteDivisor.getNumber().length() + 1) {
-        BigInteger quotient("0");
-        while (absoluteDividend >= absoluteDivisor) {
-            absoluteDividend -= absoluteDivisor;
-            quotient++;
-        }
-        return make_pair(BigInteger(quotient.getNumber(), dividend.getSign() != divisor.getSign()),
-                         absoluteDividend);
-    } else {
-
-        unsigned long offset = absoluteDivisor.getNumber().length();
-        string quotientStr = "";
-        string remainderStr = "";
-        string tempStr = absoluteDividend.getNumber().substr(0, offset);
-        BigInteger temp = BigInteger(tempStr);
-
-        //if we need to borrow from the very first time
-        if (absoluteDivisor > temp) {
-            ++offset;
-            tempStr = absoluteDividend.getNumber().substr(0, offset);
-            temp = BigInteger(tempStr);
-        }
-
-        while (absoluteDividend.getNumber().length() >= offset) {
-            int q = 0;
-            while (temp >= absoluteDivisor) {
-                temp -= absoluteDivisor;
-                q++;
-            }
-            // add q to quotient
-            quotientStr.append(1, (char) ('0' + q));
-
-            // make temp and divisor have equal number of digits
-            unsigned long deficit = absoluteDivisor.getNumber().length() - temp.getNumber().length();
-            tempStr.clear();
-            tempStr.append(temp.getNumber());
-            // looking ahead - not enough digits left
-            if (offset + deficit > absoluteDividend.getNumber().length()) {
-                remainderStr.append(tempStr);
-                remainderStr.append(absoluteDividend.getNumber().substr(offset));
-                break;
-            }
-            for (int i = 0; i < deficit; ++i) {
-                tempStr.append(1, absoluteDividend.getNumber()[offset]);
-                if (i >= 1) {
-                    quotientStr.append(1, '0');
-                }
-                offset++;
-            }
-            temp = BigInteger(tempStr);
-
-            if (absoluteDivisor > temp) {
-                // we still need to borrow 1 digit from dividend
-                // But can we?
-                if (offset < absoluteDividend.getNumber().length()) {
-                    tempStr.append(1, absoluteDividend.getNumber()[offset]);
-                    temp = BigInteger(tempStr);
-                    // stuff zeros to quotient
-                    if (deficit >= 1) {
-                        quotientStr.append(1, '0');
-                    }
-                    ++offset;
-                } else {
-                    // cannot borrow anymore from dividend - so, finish up
-                    remainderStr = tempStr;
-                    break;
-                }
-            }
-        }
-        return make_pair(BigInteger(quotientStr, dividend.getSign() != dividend.getSign()),
-                            BigInteger(remainderStr, dividend.getSign() != dividend.getSign()));
-    }
-}
-
-pair<BigInteger, BigInteger> BigInteger::divideSurplus(BigInteger dividend, BigInteger divisor) {
     // if we don't need to divide at all
-    if (divisor == 1) {
-        return make_pair(BigInteger(dividend, dividend.getSign() != divisor.getSign()),
-                         BigInteger("0", dividend.getSign() != divisor.getSign()));
+    if (dividend < divisor) {
+        return make_pair(BigInteger("0", dividend.getSign() != divisor.getSign()),
+                         BigInteger(dividend, dividend.getSign() != divisor.getSign()));
     }
+
+    BigInteger quotient = BigInteger("0");
+    BigInteger remainder = BigInteger(dividend);
+    while(remainder >= divisor) {
+        // check if divisor and remainder are equal sized, then quotient should be less than 10
+        if (remainder.getNumber().length() == divisor.getNumber().length()) {
+            // if equal sized then calculate the division by subtraction, less than 10 subtracts
+            while (remainder >= divisor) {
+                remainder -= divisor;
+                quotient++;
+            }
+        } else {
+            // if not equal sized then project a close multiple of the divisor to dividend by multiplying 10's
+            BigInteger temp = BigInteger(remainder.getNumber().substr(0, divisor.getNumber().length()));
+            long numberOfZeros = 0;
+            // check if multiplying 10's to divisor will generate a bigger number than dividend
+            if (temp >= divisor.absolute()) {
+                // now 10's multiple will be less than or equal to dividend
+                numberOfZeros = remainder.getNumber().length() - divisor.getNumber().length();
+            } else {
+                // multiply 10's 1 less to generate a number that is less than dividend
+                numberOfZeros = remainder.getNumber().length() - divisor.getNumber().length() - 1;
+            }
+
+            string qStr = "1";
+            qStr.append(numberOfZeros, '0');
+            quotient += BigInteger(qStr);
+
+            string tempDivisorStr = divisor.getNumber();
+            tempDivisorStr.append(numberOfZeros, '0');
+            remainder -= BigInteger(tempDivisorStr);
+        }
+    }
+    return make_pair(quotient, remainder);
+}
+*/
+
+
+pair<BigInteger, BigInteger> BigInteger::divide(BigInteger dividend, BigInteger divisor) {
+    // if we don't need to divide at all
     if (dividend < divisor) {
         return make_pair(BigInteger("0", dividend.getSign() != divisor.getSign()),
                          BigInteger(dividend, dividend.getSign() != divisor.getSign()));
@@ -671,11 +745,9 @@ pair<BigInteger, BigInteger> BigInteger::divideSurplus(BigInteger dividend, BigI
     BigInteger quotient = BigInteger("0", dividend.getSign() != divisor.getSign());
     BigInteger remainder = BigInteger(dividend.absolute());
     BigInteger divisorAbs = BigInteger(divisor.absolute());
-
-    long iteration = 0;
-
+    //int iterator = 0;
     while(remainder >= divisorAbs) {
-        iteration++;
+        //iterator++;
         // check if divisor and remainder are equal sized, then quotient should be less than 10
         if (remainder.getNumber().length() == divisorAbs.getNumber().length()) {
             // if equal sized then calculate the division by subtraction, less than 10 subtracts
@@ -688,13 +760,13 @@ pair<BigInteger, BigInteger> BigInteger::divideSurplus(BigInteger dividend, BigI
             BigInteger temp = BigInteger(remainder.getNumber().substr(0, divisorAbs.getNumber().length()));
             long numberOfZeros = 0;
             // check if multiplying 10's to divisor will generate a bigger number than dividend
-            int surplus = 0;
+            int tempRatio = 0;
             if (temp >= divisorAbs) {
                 // now 10's multiple will be less than or equal to dividend
                 numberOfZeros = remainder.getNumber().length() - divisorAbs.getNumber().length();
                 while (temp >= divisorAbs) {
                     temp -= divisorAbs;
-                    surplus++;
+                    tempRatio++;
                 }
             } else {
                 // multiply 10's 1 less to generate a number that is less than dividend
@@ -704,79 +776,21 @@ pair<BigInteger, BigInteger> BigInteger::divideSurplus(BigInteger dividend, BigI
                 temp = BigInteger(str);
                 while (temp >= divisorAbs) {
                     temp -= divisorAbs;
-                    surplus++;
+                    tempRatio++;
                 }
             }
 
             string qStr("");
-            qStr.append(1, '0' + surplus);
+            qStr.append(1, '0' + tempRatio);
             qStr.append(numberOfZeros, '0');
             quotient += BigInteger(qStr);
 
-            BigInteger surplusDivisor = divisorAbs * surplus;
+            BigInteger surplusDivisor = divisorAbs * tempRatio;
             string tempDivisorStr = surplusDivisor.getNumber();
             tempDivisorStr.append(numberOfZeros, '0');
             remainder -= BigInteger(tempDivisorStr);
         }
     }
-    cout<< "\nDividend=" << dividend.getNumber();
-    cout<< "\nDivisor=" << divisor.getNumber();
-    cout<< "\nIterations=" << iteration;
+
     return make_pair(quotient, remainder);
-}
-
-pair<BigInteger, BigInteger> BigInteger::divideSquaredProjection(BigInteger dividend, BigInteger divisor) {
-/*
-    BigInteger absoluteDivisor = divisor.absolute();
-    BigInteger absoluteDividend = dividend.absolute();
-    BigInteger projectedInteger = divisor.absolute();
-    BigInteger quotient = BigInteger("0");
-    while (dividend.getNumber().length() - projectedInteger.getNumber().length() >= divisor.getNumber().length()) {
-        projectedInteger *= absoluteDivisor;
-        quotient += absoluteDivisor;
-    }
-    if (projectedInteger > absoluteDividend) {
-        while (projectedInteger >= absoluteDividend) {
-            projectedInteger -= absoluteDivisor;
-            quotient--;
-        }
-    }
-    if (projectedInteger == absoluteDividend) {
-        return make_pair(BigInteger(quotient.getNumber(), dividend.getSign() != divisor.getSign()), BigInteger("0"));
-    }
-
-    return pair<BigInteger, BigInteger>();
-*/
-
-    BigInteger absoluteDivisor = divisor.absolute();
-    BigInteger absoluteDividend = dividend.absolute();
-    BigInteger remainder = BigInteger(absoluteDividend);
-    BigInteger quotient("0");
-    while (remainder >= absoluteDivisor) {
-        string projStr = "";
-        projStr.append(remainder.getNumber().length() - divisor.getNumber().length() - 1, '9');
-        quotient = BigInteger(projStr);
-        BigInteger projectionBigInt = quotient * absoluteDivisor;
-        BigInteger remainder = absoluteDividend - projectionBigInt;
-    }
-    return make_pair(BigInteger(quotient.getNumber(), dividend.getSign() != divisor.getSign()), remainder);
-}
-
-string BigInteger::toString(long long n) {
-    stringstream ss;
-    string temp;
-
-    ss << n;
-    ss >> temp;
-
-    return temp;
-}
-
-long long BigInteger::toInt(string s) {
-    long long sum = 0;
-
-    for(int i=0; i<s.length(); i++)
-        sum = (sum*10) + (s[i] - '0');
-
-    return sum;
-}
+};
